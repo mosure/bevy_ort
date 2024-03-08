@@ -16,9 +16,13 @@ use ort::{
     CUDAExecutionProvider,
     GraphOptimizationLevel,
     OpenVINOExecutionProvider,
-    Session,
 };
 use thiserror::Error;
+
+pub use ort::{
+    inputs,
+    Session,
+};
 
 
 pub struct BevyOrtPlugin;
