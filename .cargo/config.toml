@@ -1,0 +1,7 @@
+
+# fix spurious network error on windows
+# [source.crates-io]
+# registry = "https://github.com/rust-lang/crates.io-index"
+
+[http]
+proxy = ""
