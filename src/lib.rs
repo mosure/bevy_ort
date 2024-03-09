@@ -24,6 +24,8 @@ pub use ort::{
     Session,
 };
 
+pub mod models;
+
 
 pub struct BevyOrtPlugin;
 impl Plugin for BevyOrtPlugin {

@@ -10,18 +10,32 @@
 a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 
 
+![person](assets/person.png)
+![mask](assets/mask.png)
+*> modnet inference example*
+
+
 ## capabilities
 
 - [X] load ONNX models as ORT session assets
 - [X] initialize ORT with default execution providers
-
+- [X] modnet bevy image <-> ort tensor IO (with feature `modnet`)
+- [ ] compute task pool inference scheduling
 
 
 ## library usage
 
 ```rust
+use bevy::prelude::*;
+
 use bevy_ort::{
     BevyOrtPlugin,
+    inputs,
+    models::modnet::{
+        image_to_modnet_input,
+        modnet_output_to_luma_image,
+    },
+    Onnx,
 };
 
 
@@ -31,40 +45,101 @@ fn main() {
             DefaultPlugins,
             BevyOrtPlugin,
         ))
-        .add_systems(Startup, load_model)
-        .add_system(Update, inference)
+        .init_resource::<Modnet>()
+        .add_systems(Startup, load_modnet)
+        .add_systems(Update, inference)
         .run();
 }
 
-fn load_model(
-    asset_server: Res<AssetServer>,
-) {
-    let model_handle: Handle<Onnx> = asset_server.load("path/to/model.onnx");
+#[derive(Resource, Default)]
+pub struct Modnet {
+    pub onnx: Handle<Onnx>,
+    pub input: Handle<Image>,
 }
 
-fn inference(
+fn load_modnet(
     asset_server: Res<AssetServer>,
-    mut models: ResMut<Assets<Onnx>>,
+    mut modnet: ResMut<Modnet>,
 ) {
-    let model_handle: Handle<Onnx> = todo!();
+    let modnet_handle: Handle<Onnx> = asset_server.load("modnet_photographic_portrait_matting.onnx");
+    modnet.onnx = modnet_handle;
 
-    if Some(LoadState::Loaded) == asset_server.get_load_state(model_handle) {
-        let model: &Onnx = models.get(model_handle).unwrap();
+    let input_handle: Handle<Image> = asset_server.load("person.png");
+    modnet.input = input_handle;
+}
 
-        if let Some(session) = &model.session {
-            let input_values = todo!();
-            let outputs = session.run(input_values).unwrap();
+
+fn inference(
+    mut commands: Commands,
+    modnet: Res<Modnet>,
+    onnx_assets: Res<Assets<Onnx>>,
+    mut images: ResMut<Assets<Image>>,
+    mut complete: Local<bool>,
+) {
+    if *complete {
+        return;
+    }
+
+    let image = images.get(&modnet.input).expect("failed to get image asset");
+    let input = image_to_modnet_input(image);
+
+    let output: Result<ort::SessionOutputs<'_>, String> = (|| {
+        let onnx = onnx_assets.get(&modnet.onnx).ok_or("failed to get ONNX asset")?;
+        let session = onnx.session.as_ref().ok_or("failed to get session from ONNX asset")?;
+
+        let input_values = inputs!["input" => input.view()].map_err(|e| e.to_string())?;
+        session.run(input_values).map_err(|e| e.to_string())
+    })();
+
+    match output {
+        Ok(output) => {
+            let output_value: &ort::Value = output.get("output").unwrap();
+
+            let mask_image = modnet_output_to_luma_image(output_value);
+            let mask_image = images.add(mask_image);
+
+            commands.spawn(NodeBundle {
+                style: Style {
+                    display: Display::Grid,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    grid_template_columns: RepeatedGridTrack::flex(1, 1.0),
+                    grid_template_rows: RepeatedGridTrack::flex(1, 1.0),
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::DARK_GRAY),
+                ..default()
+            })
+            .with_children(|builder| {
+                builder.spawn(ImageBundle {
+                    style: Style {
+                        ..default()
+                    },
+                    image: UiImage::new(mask_image.clone()),
+                    ..default()
+                });
+            });
+
+            commands.spawn(Camera2dBundle::default());
+
+            *complete = true;
+        },
+        Err(error) => {
+            println!("inference failed: {}", error);
         }
     }
 }
+
 ```
 
 
-## run the example person segmentation model
+## run the example person segmentation model (modnet)
 
 ```sh
-cargo run --bin modnet -- --input assets/person.jpg
+cargo run
 ```
+
+> note: if you use `pip install onnxruntime`, you may need to run `ORT_STRATEGY=system cargo run`, see: https://docs.rs/ort/latest/ort/#how-to-get-binaries
 
 
 ## compatible bevy versions
@@ -72,3 +147,6 @@ cargo run --bin modnet -- --input assets/person.jpg
 | `bevy_ort`    | `bevy` |
 | :--                   | :--    |
 | `0.1.0`               | `0.13` |
+
+## credits
+- [modnet](https://github.com/ZHKKKe/MODNet)
