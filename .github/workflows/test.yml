@@ -37,7 +37,7 @@ jobs:
         toolchain: ${{ matrix.rust-toolchain }}
 
     - name: lint
-      run: clippy -- -Dwarnings
+      run: cargo clippy -- -Dwarnings
 
     - name: build
       run: ORT_STRATEGY=system cargo build
