@@ -1,4 +1,5 @@
 use std::io::ErrorKind;
+use std::sync::{Arc, Mutex};
 
 use bevy::{
     prelude::*,
@@ -13,9 +14,11 @@ use bevy::{
 use ort::{
     CoreMLExecutionProvider,
     CPUExecutionProvider,
+    DirectMLExecutionProvider,
     CUDAExecutionProvider,
     GraphOptimizationLevel,
     OpenVINOExecutionProvider,
+    TensorRTExecutionProvider,
 };
 use thiserror::Error;
 
@@ -36,6 +39,8 @@ impl Plugin for BevyOrtPlugin {
                 CoreMLExecutionProvider::default().build(),
                 CUDAExecutionProvider::default().build(),
                 OpenVINOExecutionProvider::default().build(),
+                DirectMLExecutionProvider::default().build(),
+                TensorRTExecutionProvider::default().build(),
                 CPUExecutionProvider::default().build(),
             ])
             .commit().ok();
@@ -48,7 +53,7 @@ impl Plugin for BevyOrtPlugin {
 
 #[derive(Asset, Debug, Default, TypePath)]
 pub struct Onnx {
-    pub session: Option<Session>,
+    pub session: Arc<Mutex<Option<Session>>>,
 }
 
 
@@ -83,11 +88,10 @@ impl AssetLoader for OnnxLoader {
                     // TODO: add session configuration
                     let session = Session::builder()?
                         .with_optimization_level(GraphOptimizationLevel::Level3)?
-                        .with_intra_threads(4)?
                         .with_model_from_memory(&bytes)?;
 
                     Ok(Onnx {
-                        session: Some(session),
+                        session: Arc::new(Mutex::new(Some(session))),
                     })
                 },
                 _ => Err(BevyOrtError::Io(std::io::Error::new(ErrorKind::Other, "only .onnx supported"))),

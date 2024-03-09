@@ -58,19 +58,22 @@ fn inference(
     let image = images.get(&modnet.input).expect("failed to get image asset");
     let input = images_to_modnet_input(vec![&image], Some((256, 144)));
 
-    let output: Result<ort::SessionOutputs<'_>, String> = (|| {
+    let mask_image: Result<Image, String> = (|| {
         let onnx = onnx_assets.get(&modnet.onnx).ok_or("failed to get ONNX asset")?;
-        let session = onnx.session.as_ref().ok_or("failed to get session from ONNX asset")?;
+        let session_lock = onnx.session.lock().map_err(|e| e.to_string())?;
+        let session = session_lock.as_ref().ok_or("failed to get session from ONNX asset")?;
 
         let input_values = inputs!["input" => input.view()].map_err(|e| e.to_string())?;
-        session.run(input_values).map_err(|e| e.to_string())
+        let outputs = session.run(input_values).map_err(|e| e.to_string());
+
+        let binding = outputs.ok().unwrap();
+        let output_value: &ort::Value = binding.get("output").unwrap();
+
+        Ok(modnet_output_to_luma_images(output_value).pop().unwrap())
     })();
 
-    match output {
-        Ok(output) => {
-            let output_value: &ort::Value = output.get("output").unwrap();
-
-            let mask_image = modnet_output_to_luma_images(output_value).pop().unwrap();
+    match mask_image {
+        Ok(mask_image) => {
             let mask_image = images.add(mask_image);
 
             commands.spawn(NodeBundle {
@@ -98,9 +101,9 @@ fn inference(
             commands.spawn(Camera2dBundle::default());
 
             *complete = true;
-        },
-        Err(error) => {
-            eprintln!("inference failed: {}", error);
+        }
+        Err(e) => {
+            println!("inference failed: {}", e);
         }
     }
 }

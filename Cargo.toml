@@ -58,9 +58,10 @@ features = [
 
 [dependencies.ort]
 version = "2.0.0-alpha.4"
-default-features = true
+default-features = false
 features = [
-
+  "load-dynamic",
+  "ndarray",
 ]
 
 
