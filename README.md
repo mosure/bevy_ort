@@ -21,6 +21,7 @@ a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 - [X] load ONNX models as ORT session assets
 - [X] initialize ORT with default execution providers
 - [X] modnet bevy image <-> ort tensor IO (with feature `modnet`)
+- [X] batched modnet preprocessing
 - [ ] compute task pool inference scheduling
 
 
