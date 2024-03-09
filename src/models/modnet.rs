@@ -6,9 +6,7 @@ use ndarray::{Array, Array4, ArrayView4, Axis, s};
 pub fn modnet_output_to_luma_images(
     output_value: &ort::Value,
 ) -> Vec<Image> {
-    let tensor: ort::Tensor<f32> = output_value.extract_tensor::<f32>().unwrap();
-
-    let data = tensor.view();
+    let data = output_value.extract_tensor::<f32>().unwrap();
 
     let shape = data.shape();
     let batch_size = shape[0];
