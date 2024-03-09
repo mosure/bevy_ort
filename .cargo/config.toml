@@ -5,7 +5,3 @@
 
 [http]
 proxy = ""
-
-
-[build]
-rustc-wrapper = "sccache"
