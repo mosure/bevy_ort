@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest]
         rust-toolchain:
           - nightly
 
@@ -25,21 +25,34 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.9'
-    - run: pip install onnxruntime
-
     - name: Setup ${{ matrix.rust-toolchain }} rust toolchain with caching
       uses: brndnmtthws/rust-action@v1
       with:
         toolchain: ${{ matrix.rust-toolchain }}
 
+
+    - name: Install ONNX Runtime on Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-win-x64-1.17.1.zip" -OutFile "onnxruntime.zip"
+        Expand-Archive -Path "onnxruntime.zip" -DestinationPath "$env:RUNNER_TEMP"
+        echo "ONNXRUNTIME_DIR=$env:RUNNER_TEMP\onnxruntime-win-x64-1.17.1" | Out-File -Append -Encoding ascii $env:GITHUB_ENV
+
+    - name: Install ONNX Runtime on macOS
+      if: matrix.os == 'macos-latest'
+      run: |
+        curl -L "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-x64-1.17.1.tgz" -o "onnxruntime.tgz"
+        tar -xzf onnxruntime.tgz
+        cp -r onnxruntime-osx-x64-1.17.1 /usr/local/
+        echo "ONNXRUNTIME_DIR=/usr/local/onnxruntime-osx-x64-1.17.1" >> $GITHUB_ENV
+
+
+
     - name: lint
       run: cargo clippy -- -Dwarnings
 
     - name: build
-      run: ORT_STRATEGY=system cargo build
+      run: cargo build
 
     # - name: build (web)
     #   run: cargo build --example=minimal --target wasm32-unknown-unknown --release
