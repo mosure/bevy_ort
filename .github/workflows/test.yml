@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macos-latest]
         rust-toolchain:
           - nightly
 
@@ -41,18 +41,25 @@ jobs:
     - name: Install ONNX Runtime on macOS
       if: matrix.os == 'macos-latest'
       run: |
-        curl -L "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-x64-1.17.1.tgz" -o "onnxruntime.tgz"
+        curl -L "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-x86_64-1.17.1.tgz" -o "onnxruntime.tgz"
         tar -xzf onnxruntime.tgz
         cp -r onnxruntime-osx-x64-1.17.1 /usr/local/
         echo "ONNXRUNTIME_DIR=/usr/local/onnxruntime-osx-x64-1.17.1" >> $GITHUB_ENV
 
+
+    - name: Set ONNX Runtime library path for macOS
+      if: matrix.os == 'macos-latest'
+      run: echo "ORT_DYLIB_PATH=$ONNXRUNTIME_DIR/libonnxruntime.dylib" >> $GITHUB_ENV
+
+    - name: Set ONNX Runtime library path for Windows
+      if: matrix.os == 'windows-latest'
+      run: echo "ORT_DYLIB_PATH=$ONNXRUNTIME_DIR/onnxruntime.dll" >> $GITHUB_ENV
 
 
     - name: lint
       run: cargo clippy -- -Dwarnings
 
     - name: build
-      run: cargo build
-
-    # - name: build (web)
-    #   run: cargo build --example=minimal --target wasm32-unknown-unknown --release
+      run: cargo build --features "ort/load-dynamic"
+      env:
+        ORT_DYLIB_PATH: ${{ env.ORT_DYLIB_PATH }}
