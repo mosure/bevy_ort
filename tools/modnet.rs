@@ -24,11 +24,13 @@ fn main() {
         .run();
 }
 
+
 #[derive(Resource, Default)]
 pub struct Modnet {
     pub onnx: Handle<Onnx>,
     pub input: Handle<Image>,
 }
+
 
 fn load_modnet(
     asset_server: Res<AssetServer>,
