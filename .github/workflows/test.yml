@@ -42,8 +42,7 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: |
         curl -L "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-x86_64-1.17.1.tgz" -o "onnxruntime.tgz"
-        tar -xzf onnxruntime.tgz
-        cp -r onnxruntime-osx-x64-1.17.1 /usr/local/
+        tar -xzf onnxruntime.tgz -C /usr/local/
         echo "ONNXRUNTIME_DIR=/usr/local/onnxruntime-osx-x64-1.17.1" >> $GITHUB_ENV
 
 
