@@ -11,7 +11,7 @@ use bevy_ort::{
 };
 
 
-// TODO: provide an example /w AsyncComputeTask inference
+// see async inference example in bevy_light_field: https://github.com/mosure/bevy_light_field/blob/ba8a5c09eebb68d820676fa18cdb56a621fbdcb8/src/matting.rs#L58-L59
 fn main() {
     App::new()
         .add_plugins((
