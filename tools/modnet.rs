@@ -56,7 +56,7 @@ fn inference(
     }
 
     let image = images.get(&modnet.input).expect("failed to get image asset");
-    let input = images_to_modnet_input(vec![&image]);
+    let input = images_to_modnet_input(vec![&image], Some((256, 144)));
 
     let output: Result<ort::SessionOutputs<'_>, String> = (|| {
         let onnx = onnx_assets.get(&modnet.onnx).ok_or("failed to get ONNX asset")?;
