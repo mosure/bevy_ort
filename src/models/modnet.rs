@@ -53,14 +53,9 @@ pub fn images_to_modnet_input(
 
     let image = first_image.to_owned();
 
-    println!("image: {:?}", image.size());
-
     let (x_scale, y_scale) = get_scale_factor(image.height(), image.width(), ref_size, max_size);
     let resized_image = resize_image(&image.try_into_dynamic().unwrap(), x_scale, y_scale);
     let first_image_ndarray = image_to_ndarray(&resized_image);
-
-    println!("scale_factor: {:?}", (x_scale, y_scale));
-    println!("first_image_ndarray: {:?}", first_image_ndarray.dim());
 
     let single_image_shape = first_image_ndarray.dim();
     let n_images = images.len();
