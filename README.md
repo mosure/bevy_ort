@@ -12,6 +12,7 @@ a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 
 ![person](assets/person.png)
 ![mask](assets/mask.png)
+
 *> modnet inference example*
 
 
