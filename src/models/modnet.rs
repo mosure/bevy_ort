@@ -5,61 +5,79 @@ use std::cmp::{
 
 use bevy::{prelude::*, render::render_asset::RenderAssetUsages};
 use image::{DynamicImage, GenericImageView, imageops::FilterType, ImageBuffer, Luma, RgbImage};
-use ndarray::{Array, Array4, ArrayView4, Axis};
+use ndarray::{Array, Array4, ArrayView4, Axis, s};
 
 
-pub fn modnet_output_to_luma_image(
+pub fn modnet_output_to_luma_images(
     output_value: &ort::Value,
-) -> Image {
+) -> Vec<Image> {
     let tensor: ort::Tensor<f32> = output_value.extract_tensor::<f32>().unwrap();
 
     let data = tensor.view();
 
     let shape = data.shape();
+    let batch_size = shape[0];
     let width = shape[3];
     let height = shape[2];
 
-    let tensor_data = ArrayView4::from_shape((1, 1, height, width), data.as_slice().unwrap())
+    let tensor_data = ArrayView4::from_shape((batch_size, 1, height, width), data.as_slice().unwrap())
         .expect("failed to create ArrayView4 from shape and data");
 
-    let mut imgbuf = ImageBuffer::<Luma<u8>, Vec<u8>>::new(width as u32, height as u32);
+    let mut images = Vec::new();
 
-    for y in 0..height {
-        for x in 0..width {
-            let pixel_value = tensor_data[(0, 0, y, x)];
-            let pixel_value = (pixel_value.clamp(0.0, 1.0) * 255.0) as u8;
-            imgbuf.put_pixel(x as u32, y as u32, Luma([pixel_value]));
+    for i in 0..batch_size {
+        let mut imgbuf = ImageBuffer::<Luma<u8>, Vec<u8>>::new(width as u32, height as u32);
+
+        for y in 0..height {
+            for x in 0..width {
+                let pixel_value = tensor_data[(i, 0, y, x)];
+                let pixel_value = (pixel_value.clamp(0.0, 1.0) * 255.0) as u8;
+                imgbuf.put_pixel(x as u32, y as u32, Luma([pixel_value]));
+            }
         }
+
+        let dyn_img = DynamicImage::ImageLuma8(imgbuf);
+
+        images.push(Image::from_dynamic(dyn_img, false, RenderAssetUsages::all()));
     }
 
-    let dyn_img = DynamicImage::ImageLuma8(imgbuf);
-
-    Image::from_dynamic(dyn_img, false, RenderAssetUsages::all())
+    images
 }
 
-
-pub fn image_to_modnet_input(
-    image: &Image,
+pub fn images_to_modnet_input(
+    images: Vec<&Image>,
 ) -> Array4<f32> {
-    assert_eq!(image.texture_descriptor.format, bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb);
+    // TODO: better error handling
+    if images.is_empty() {
+        panic!("no images provided");
+    }
 
     let ref_size = 512;
-    let (
-        x_scale,
-        y_scale,
-    ) = get_scale_factor(
-        image.height(),
-        image.width(),
-        ref_size,
-    );
 
-    let resized_image = resize_image(
-        &image.clone().try_into_dynamic().unwrap(),
-        x_scale,
-        y_scale,
-    );
+    let &first_image = images.first().unwrap();
+    assert_eq!(first_image.texture_descriptor.format, bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb);
 
-    image_to_ndarray(&resized_image)
+    let dynamic_image = first_image.clone().try_into_dynamic().unwrap();
+    let (x_scale, y_scale) = get_scale_factor(dynamic_image.height(), dynamic_image.width(), ref_size);
+    let resized_image = resize_image(&dynamic_image, x_scale, y_scale);
+    let first_image_ndarray = image_to_ndarray(&resized_image);
+    let single_image_shape = first_image_ndarray.dim();
+    let n_images = images.len();
+    let batch_shape = (n_images, single_image_shape.1, single_image_shape.2, single_image_shape.3);
+
+    let mut aggregate = Array4::<f32>::zeros(batch_shape);
+
+    for (i, &image) in images.iter().enumerate() {
+        let dynamic_image = image.clone().try_into_dynamic().unwrap();
+        let (x_scale, y_scale) = get_scale_factor(dynamic_image.height(), dynamic_image.width(), ref_size);
+        let resized_image = resize_image(&dynamic_image, x_scale, y_scale);
+        let image_ndarray = image_to_ndarray(&resized_image);
+
+        let slice = s![i, .., .., ..];
+        aggregate.slice_mut(slice).assign(&image_ndarray.index_axis_move(Axis(0), 0));
+    }
+
+    aggregate
 }
 
 

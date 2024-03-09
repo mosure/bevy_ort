@@ -33,8 +33,8 @@ use bevy_ort::{
     BevyOrtPlugin,
     inputs,
     models::modnet::{
-        image_to_modnet_input,
-        modnet_output_to_luma_image,
+        images_to_modnet_input,
+        modnet_output_to_luma_images,
     },
     Onnx,
 };
@@ -82,7 +82,7 @@ fn inference(
     }
 
     let image = images.get(&modnet.input).expect("failed to get image asset");
-    let input = image_to_modnet_input(image);
+    let input = images_to_modnet_input(vec![&image]);
 
     let output: Result<ort::SessionOutputs<'_>, String> = (|| {
         let onnx = onnx_assets.get(&modnet.onnx).ok_or("failed to get ONNX asset")?;
@@ -96,7 +96,7 @@ fn inference(
         Ok(output) => {
             let output_value: &ort::Value = output.get("output").unwrap();
 
-            let mask_image = modnet_output_to_luma_image(output_value);
+            let mask_image = modnet_output_to_luma_images(output_value).pop().unwrap();
             let mask_image = images.add(mask_image);
 
             commands.spawn(NodeBundle {
