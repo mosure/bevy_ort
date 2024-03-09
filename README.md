@@ -22,7 +22,7 @@ a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 - [X] initialize ORT with default execution providers
 - [X] modnet bevy image <-> ort tensor IO (with feature `modnet`)
 - [X] batched modnet preprocessing
-- [ ] compute task pool inference scheduling
+- [X] compute task pool inference scheduling
 
 
 ## library usage
