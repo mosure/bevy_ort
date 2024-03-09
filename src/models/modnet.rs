@@ -20,13 +20,13 @@ pub fn modnet_output_to_luma_image(
     let height = shape[2];
 
     let tensor_data = ArrayView4::from_shape((1, 1, height, width), data.as_slice().unwrap())
-        .expect("Failed to create ArrayView4 from shape and data");
+        .expect("failed to create ArrayView4 from shape and data");
 
     let mut imgbuf = ImageBuffer::<Luma<u8>, Vec<u8>>::new(width as u32, height as u32);
 
     for y in 0..height {
         for x in 0..width {
-            let pixel_value = tensor_data[(0, 0, y as usize, x as usize)];
+            let pixel_value = tensor_data[(0, 0, y, x)];
             let pixel_value = (pixel_value.clamp(0.0, 1.0) * 255.0) as u8;
             imgbuf.put_pixel(x as u32, y as u32, Luma([pixel_value]));
         }
@@ -104,9 +104,7 @@ fn image_to_ndarray(img: &RgbImage) -> Array4<f32> {
         .expect("failed to create ndarray from image raw data");
 
     // rearrange the dimensions from [height, width, channels] to [1, channels, height, width]
-    let arr = arr.permuted_axes([2, 0, 1]).insert_axis(Axis(0));
-
-    arr
+    arr.permuted_axes([2, 0, 1]).insert_axis(Axis(0))
 }
 
 fn resize_image(image: &DynamicImage, x_scale: f32, y_scale: f32) -> RgbImage {
