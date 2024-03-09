@@ -38,7 +38,6 @@ modnet = []
 bevy_args = "1.3"
 image = "0.24"
 ndarray = "0.15"
-ort = "2.0.0-alpha.4"
 thiserror = "1.0"
 tokio = { version = "1.36", features = ["full"] }
 
@@ -54,6 +53,14 @@ features = [
   "bevy_winit",
   "multi-threaded",
   "png",
+]
+
+
+[dependencies.ort]
+version = "2.0.0-alpha.4"
+default-features = true
+features = [
+
 ]
 
 

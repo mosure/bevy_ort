@@ -139,6 +139,13 @@ fn inference(
 cargo run
 ```
 
+use an accelerated execution provider:
+- windows - `cargo run --features ort/cuda` or `cargo run --features ort/openvino`
+- macos - `cargo run --features ort/coreml`
+- linux - `cargo run --features ort/tensorrt` or `cargo run --features ort/openvino`
+
+> see complete list of ort features here: https://github.com/pykeio/ort/blob/0aec4030a5f3470e4ee6c6f4e7e52d4e495ec27a/Cargo.toml#L54
+
 > note: if you use `pip install onnxruntime`, you may need to run `ORT_STRATEGY=system cargo run`, see: https://docs.rs/ort/latest/ort/#how-to-get-binaries
 
 
