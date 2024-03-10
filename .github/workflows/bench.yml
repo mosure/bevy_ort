@@ -1,0 +1,67 @@
+name: bench
+
+on:
+  pull_request:
+    types: [ labeled, synchronize ]
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  bench:
+    if: contains(github.event.pull_request.labels.*.name, 'bench')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-build-stable-${{ hashFiles('**/Cargo.toml') }}
+
+
+    - name: Install ONNX Runtime on Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-win-x64-1.17.1.zip" -OutFile "onnxruntime.zip"
+        Expand-Archive -Path "onnxruntime.zip" -DestinationPath "$env:RUNNER_TEMP"
+        echo "ONNXRUNTIME_DIR=$env:RUNNER_TEMP\onnxruntime-win-x64-1.17.1" | Out-File -Append -Encoding ascii $env:GITHUB_ENV
+
+    - name: Install ONNX Runtime on macOS
+      if: matrix.os == 'macos-latest'
+      run: |
+        curl -L "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-x86_64-1.17.1.tgz" -o "onnxruntime.tgz"
+        mkdir -p $HOME/onnxruntime
+        tar -xzf onnxruntime.tgz -C $HOME/onnxruntime
+        echo "ONNXRUNTIME_DIR=$HOME/onnxruntime/onnxruntime-osx-x86_64-1.17.1" >> $GITHUB_ENV
+
+
+    - name: Set ONNX Runtime library path for macOS
+      if: matrix.os == 'macos-latest'
+      run: echo "ORT_DYLIB_PATH=$ONNXRUNTIME_DIR/libonnxruntime.dylib" >> $GITHUB_ENV
+
+    - name: Set ONNX Runtime library path for Windows
+      if: matrix.os == 'windows-latest'
+      run: echo "ORT_DYLIB_PATH=$ONNXRUNTIME_DIR/onnxruntime.dll" >> $GITHUB_ENV
+
+
+    - name: io benchmark
+      uses: boa-dev/criterion-compare-action@v3.2.4
+      with:
+        benchName: "modnet"
+        branchName: ${{ github.base_ref }}
+        token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,7 @@
 use bevy::{prelude::*, render::render_asset::RenderAssetUsages};
 use image::{DynamicImage, GenericImageView, imageops::FilterType, ImageBuffer, Luma, RgbImage};
-use ndarray::{Array, Array4, ArrayView4, Axis, s};
+use ndarray::{Array, Array4, ArrayView4};
+use rayon::prelude::*;
 
 
 pub fn modnet_output_to_luma_images(
@@ -39,7 +40,7 @@ pub fn modnet_output_to_luma_images(
 
 
 pub fn images_to_modnet_input(
-    images: Vec<&Image>,
+    images: &[&Image],
     max_size: Option<(u32, u32)>,
 ) -> Array4<f32> {
     if images.is_empty() {
@@ -49,58 +50,45 @@ pub fn images_to_modnet_input(
     let ref_size = 512;
     let &first_image = images.first().unwrap();
 
-    let image = first_image.to_owned();
+    let (x_scale, y_scale) = get_scale_factor(first_image.height(), first_image.width(), ref_size, max_size);
 
-    let (x_scale, y_scale) = get_scale_factor(image.height(), image.width(), ref_size, max_size);
-    let resized_image = resize_image(&image.try_into_dynamic().unwrap(), x_scale, y_scale);
-    let first_image_ndarray = image_to_ndarray(&resized_image);
+    let processed_images: Vec<Array4<f32>> = images
+        .par_iter()
+        .map(|&image| {
+            let resized_image = resize_image(&image.clone().try_into_dynamic().unwrap(), x_scale, y_scale);
+            image_to_ndarray(&resized_image)
+        })
+        .collect();
 
-    let single_image_shape = first_image_ndarray.dim();
-    let n_images = images.len();
-    let batch_shape = (n_images, single_image_shape.1, single_image_shape.2, single_image_shape.3);
-
-    let mut aggregate = Array4::<f32>::zeros(batch_shape);
-
-    for (i, &image) in images.iter().enumerate() {
-        let image = image.to_owned();
-        let (x_scale, y_scale) = get_scale_factor(image.height(), image.width(), ref_size, max_size);
-        let resized_image = resize_image(&image.try_into_dynamic().unwrap(), x_scale, y_scale);
-        let image_ndarray = image_to_ndarray(&resized_image);
-
-        let slice = s![i, .., .., ..];
-        aggregate.slice_mut(slice).assign(&image_ndarray.index_axis_move(Axis(0), 0));
-    }
+    let aggregate = Array::from_shape_vec(
+        (processed_images.len(), processed_images[0].shape()[1], processed_images[0].shape()[2], processed_images[0].shape()[3]),
+        processed_images.iter().flat_map(|a| a.iter().cloned()).collect(),
+    ).unwrap();
 
     aggregate
 }
 
 
 fn get_scale_factor(im_h: u32, im_w: u32, ref_size: u32, max_size: Option<(u32, u32)>) -> (f32, f32) {
-    // Calculate the scale factor based on the maximum size constraints
     let scale_factor_max = max_size.map_or(1.0, |(max_w, max_h)| {
         f32::min(max_w as f32 / im_w as f32, max_h as f32 / im_h as f32)
     });
 
-    // Calculate the target dimensions after applying the max scale factor (clipping to max_size)
     let (target_h, target_w) = ((im_h as f32 * scale_factor_max).round() as u32, (im_w as f32 * scale_factor_max).round() as u32);
 
-    // Calculate the scale factor to fit within the reference size, considering the target dimensions
     let (scale_factor_ref_w, scale_factor_ref_h) = if std::cmp::max(target_h, target_w) < ref_size {
         let scale_factor = ref_size as f32 / std::cmp::max(target_h, target_w) as f32;
         (scale_factor, scale_factor)
     } else {
-        (1.0, 1.0) // Do not upscale if target dimensions are within reference size
+        (1.0, 1.0)
     };
 
-    // Calculate the final scale factor as the minimum of the max scale factor and the reference scale factor
     let final_scale_w = f32::min(scale_factor_max, scale_factor_ref_w);
     let final_scale_h = f32::min(scale_factor_max, scale_factor_ref_h);
 
-    // Adjust dimensions to ensure they are multiples of 32
     let final_w = ((im_w as f32 * final_scale_w).round() as u32) - ((im_w as f32 * final_scale_w).round() as u32) % 32;
     let final_h = ((im_h as f32 * final_scale_h).round() as u32) - ((im_h as f32 * final_scale_h).round() as u32) % 32;
 
-    // Return the scale factors based on the original image dimensions
     (final_w as f32 / im_w as f32, final_h as f32 / im_h as f32)
 }
 
@@ -108,21 +96,18 @@ fn get_scale_factor(im_h: u32, im_w: u32, ref_size: u32, max_size: Option<(u32, 
 fn image_to_ndarray(img: &RgbImage) -> Array4<f32> {
     let (width, height) = img.dimensions();
 
-    // convert RgbImage to a Vec of f32 values normalized to [-1, 1]
-    let raw: Vec<f32> = img.pixels()
-        .flat_map(|p| {
-            p.0.iter().map(|&e| {
-                (e as f32 - 127.5) / 127.5
-            })
-        })
-        .collect();
+    let arr = Array::from_shape_fn((1, 3, height as usize, width as usize), |(_, c, y, x)| {
+        let pixel = img.get_pixel(x as u32, y as u32);
+        let channel_value = match c {
+            0 => pixel[0],
+            1 => pixel[1],
+            2 => pixel[2],
+            _ => unreachable!(),
+        };
+        (channel_value as f32 - 127.5) / 127.5
+    });
 
-    // create a 3D array from the raw pixel data
-    let arr = Array::from_shape_vec((height as usize, width as usize, 3), raw)
-        .expect("failed to create ndarray from image raw data");
-
-    // rearrange the dimensions from [height, width, channels] to [1, channels, height, width]
-    arr.permuted_axes([2, 0, 1]).insert_axis(Axis(0))
+    arr
 }
 
 fn resize_image(image: &DynamicImage, x_scale: f32, y_scale: f32) -> RgbImage {
@@ -130,5 +115,5 @@ fn resize_image(image: &DynamicImage, x_scale: f32, y_scale: f32) -> RgbImage {
     let new_width = (width as f32 * x_scale) as u32;
     let new_height = (height as f32 * y_scale) as u32;
 
-    image.resize_exact(new_width, new_height, FilterType::Triangle).to_rgb8()
+    image.resize_exact(new_width, new_height, FilterType::Nearest).to_rgb8()
 }
