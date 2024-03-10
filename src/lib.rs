@@ -88,7 +88,7 @@ impl AssetLoader for OnnxLoader {
                     // TODO: add session configuration
                     let session = Session::builder()?
                         .with_optimization_level(GraphOptimizationLevel::Level3)?
-                        .commit_from_memory(&bytes)?;
+                        .with_model_from_memory(&bytes)?;
 
                     Ok(Onnx {
                         session: Arc::new(Mutex::new(Some(session))),

@@ -60,7 +60,6 @@ features = [
 
 [dependencies.ort]
 version = "2.0.0-rc.0"
-git = "https://github.com/pykeio/ort.git"
 default-features = false
 features = [
   "cuda",

@@ -7,7 +7,8 @@ use rayon::prelude::*;
 pub fn modnet_output_to_luma_images(
     output_value: &ort::Value,
 ) -> Vec<Image> {
-    let data = output_value.extract_tensor::<f32>().unwrap();
+    let tensor = output_value.extract_tensor::<f32>().unwrap();
+    let data = tensor.view();
 
     let shape = data.shape();
     let batch_size = shape[0];

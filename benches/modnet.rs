@@ -75,7 +75,7 @@ fn modnet_output_to_luma_images_benchmark(c: &mut Criterion) {
 
     let session = Session::builder().unwrap()
         .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
-        .commit_from_file("assets/modnet_photographic_portrait_matting.onnx").unwrap();
+        .with_model_from_file("assets/modnet_photographic_portrait_matting.onnx").unwrap();
 
     let data = vec![0u8; (1920 * 1080 * 4) as usize];
     let image: Image = Image::new(
