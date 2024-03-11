@@ -116,5 +116,5 @@ fn resize_image(image: &DynamicImage, x_scale: f32, y_scale: f32) -> RgbImage {
     let new_width = (width as f32 * x_scale) as u32;
     let new_height = (height as f32 * y_scale) as u32;
 
-    image.resize_exact(new_width, new_height, FilterType::Nearest).to_rgb8()
+    image.resize_exact(new_width, new_height, FilterType::Triangle).to_rgb8()
 }
