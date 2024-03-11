@@ -1,10 +1,6 @@
 # bevy_ort 🪨
 [![test](https://github.com/mosure/bevy_ort/workflows/test/badge.svg)](https://github.com/Mosure/bevy_ort/actions?query=workflow%3Atest)
 [![GitHub License](https://img.shields.io/github/license/mosure/bevy_ort)](https://raw.githubusercontent.com/mosure/bevy_ort/main/LICENSE)
-[![GitHub Last Commit](https://img.shields.io/github/last-commit/mosure/bevy_ort)](https://github.com/mosure/bevy_ort)
-[![GitHub Releases](https://img.shields.io/github/v/release/mosure/bevy_ort?include_prereleases&sort=semver)](https://github.com/mosure/bevy_ort/releases)
-[![GitHub Issues](https://img.shields.io/github/issues/mosure/bevy_ort)](https://github.com/mosure/bevy_ort/issues)
-[![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/mosure/bevy_ort.svg)](http://isitmaintained.com/project/mosure/bevy_ort)
 [![crates.io](https://img.shields.io/crates/v/bevy_ort.svg)](https://crates.io/crates/bevy_ort)
 
 a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
