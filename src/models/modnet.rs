@@ -28,7 +28,7 @@ pub fn modnet_output_to_luma_images(
     let tensor_data = ArrayView4::from_shape((batch_size, 1, height, width), data.as_slice().unwrap())
         .expect("failed to create ArrayView4 from shape and data");
 
-    let images = (0..batch_size)
+    (0..batch_size)
         .into_par_iter()
         .map(|i| {
             let mut imgbuf = ImageBuffer::<Luma<u8>, Vec<u8>>::new(width as u32, height as u32);
@@ -41,7 +41,7 @@ pub fn modnet_output_to_luma_images(
                 }
             }
 
-            let image = Image::new(
+            Image::new(
                 Extent3d {
                     width: width as u32,
                     height: height as u32,
@@ -51,13 +51,9 @@ pub fn modnet_output_to_luma_images(
                 imgbuf.into_raw(),
                 TextureFormat::R8Unorm,
                 RenderAssetUsages::all(),
-            );
-
-            image
+            )
         })
-        .collect::<Vec<_>>();
-
-    images
+        .collect::<Vec<_>>()
 }
 
 
