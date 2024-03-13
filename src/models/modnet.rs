@@ -1,4 +1,14 @@
-use bevy::{prelude::*, render::render_asset::RenderAssetUsages};
+use bevy::{
+    prelude::*,
+    render::{
+        render_asset::RenderAssetUsages,
+        render_resource::{
+            Extent3d,
+            TextureDimension,
+            TextureFormat,
+        },
+    },
+};
 use image::{DynamicImage, GenericImageView, imageops::FilterType, ImageBuffer, Luma, RgbImage};
 use ndarray::{Array, Array4, ArrayView4};
 use rayon::prelude::*;
@@ -18,23 +28,34 @@ pub fn modnet_output_to_luma_images(
     let tensor_data = ArrayView4::from_shape((batch_size, 1, height, width), data.as_slice().unwrap())
         .expect("failed to create ArrayView4 from shape and data");
 
-    let mut images = Vec::new();
+    let images = (0..batch_size)
+        .into_par_iter()
+        .map(|i| {
+            let mut imgbuf = ImageBuffer::<Luma<u8>, Vec<u8>>::new(width as u32, height as u32);
 
-    for i in 0..batch_size {
-        let mut imgbuf = ImageBuffer::<Luma<u8>, Vec<u8>>::new(width as u32, height as u32);
-
-        for y in 0..height {
-            for x in 0..width {
-                let pixel_value = tensor_data[(i, 0, y, x)];
-                let pixel_value = (pixel_value.clamp(0.0, 1.0) * 255.0) as u8;
-                imgbuf.put_pixel(x as u32, y as u32, Luma([pixel_value]));
+            for y in 0..height {
+                for x in 0..width {
+                    let pixel_value = tensor_data[(i, 0, y, x)];
+                    let pixel_value = (pixel_value.clamp(0.0, 1.0) * 255.0) as u8;
+                    imgbuf.put_pixel(x as u32, y as u32, Luma([pixel_value]));
+                }
             }
-        }
 
-        let dyn_img = DynamicImage::ImageLuma8(imgbuf);
+            let image = Image::new(
+                Extent3d {
+                    width: width as u32,
+                    height: height as u32,
+                    depth_or_array_layers: 1,
+                },
+                TextureDimension::D2,
+                imgbuf.into_raw(),
+                TextureFormat::R8Unorm,
+                RenderAssetUsages::all(),
+            );
 
-        images.push(Image::from_dynamic(dyn_img, false, RenderAssetUsages::all()));
-    }
+            image
+        })
+        .collect::<Vec<_>>();
 
     images
 }
