@@ -37,6 +37,16 @@ const MAX_RESOLUTIONS: [(u32, u32); 4] = [
 const STREAM_COUNT: usize = 16;
 
 
+criterion_group!{
+    name = modnet_benches;
+    config = Criterion::default().sample_size(10);
+    targets = images_to_modnet_input_benchmark,
+              modnet_output_to_luma_images_benchmark,
+              modnet_inference_benchmark,
+}
+criterion_main!(modnet_benches);
+
+
 fn images_to_modnet_input_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("images_to_modnet_input");
 
@@ -107,9 +117,40 @@ fn modnet_output_to_luma_images_benchmark(c: &mut Criterion) {
 }
 
 
-criterion_group!{
-    name = modnet_benches;
-    config = Criterion::default().sample_size(10);
-    targets = images_to_modnet_input_benchmark, modnet_output_to_luma_images_benchmark
+fn modnet_inference_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("modnet_inference");
+
+    let session = Session::builder().unwrap()
+        .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
+        .with_model_from_file("assets/modnet_photographic_portrait_matting.onnx").unwrap();
+
+    MAX_RESOLUTIONS.iter().for_each(|(width, height)| {
+        let data = vec![0u8; *width as usize * *height as usize * 4];
+        let image = Image::new(
+            Extent3d {
+                width: *width,
+                height: *height,
+                depth_or_array_layers: 1,
+            },
+            TextureDimension::D2,
+            data.clone(),
+            bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb,
+            RenderAssetUsages::all(),
+        );
+
+        let input = images_to_modnet_input(&[&image], Some((*width, *height)));
+
+        group.throughput(Throughput::Elements(1));
+        group.bench_with_input(BenchmarkId::from_parameter(format!("{}x{}", width, height)), &(width, height), |b, _| {
+            b.iter(|| {
+                let input_values = inputs!["input" => input.view()].map_err(|e| e.to_string()).unwrap();
+                let outputs = session.run(input_values).map_err(|e| e.to_string());
+                let binding = outputs.ok().unwrap();
+                let output_value: &ort::Value = binding.get("output").unwrap();
+                modnet_output_to_luma_images(output_value);
+            });
+        });
+    });
+
+    group.finish();
 }
-criterion_main!(modnet_benches);
