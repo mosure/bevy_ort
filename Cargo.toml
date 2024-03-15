@@ -1,7 +1,7 @@
 [package]
 name = "bevy_ort"
 description = "bevy ort (onnxruntime) plugin"
-version = "0.6.3"
+version = "0.7.0"
 edition = "2021"
 authors = ["mosure <mitchell@mosure.me>"]
 license = "MIT"
@@ -30,14 +30,16 @@ default-run = "modnet"
 [features]
 default = [
   "modnet",
+  "yolo_v8",
 ]
 
 modnet = ["rayon"]
+yolo_v8 = []
 
 
 [dependencies]
 bevy_args = "1.3"
-image = "0.24"
+image = "0.24"  # upgrade with bevy
 ndarray = "0.15"
 rayon = { version = "1.8", optional = true }
 thiserror = "1.0"
@@ -92,7 +94,15 @@ path = "src/lib.rs"
 name = "modnet"
 path = "tools/modnet.rs"
 
+[[bin]]
+name = "yolo_v8"
+path = "tools/yolo_v8.rs"
+
 
 [[bench]]
 name = "modnet"
+harness = false
+
+[[bench]]
+name = "yolo_v8"
 harness = false

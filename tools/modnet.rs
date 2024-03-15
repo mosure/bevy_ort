@@ -103,7 +103,7 @@ fn inference(
             *complete = true;
         }
         Err(e) => {
-            println!("inference failed: {}", e);
+            eprintln!("inference failed: {}", e);
         }
     }
 }

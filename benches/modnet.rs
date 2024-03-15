@@ -151,6 +151,4 @@ fn modnet_inference_benchmark(c: &mut Criterion) {
             });
         });
     });
-
-    group.finish();
 }

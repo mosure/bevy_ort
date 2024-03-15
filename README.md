@@ -20,6 +20,10 @@ a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 - [X] batched modnet preprocessing
 - [X] compute task pool inference scheduling
 
+### models
+- [X] modnet (photographic portrait matting)
+- [X] yolo_v8 (object detection)
+
 
 ## library usage
 
