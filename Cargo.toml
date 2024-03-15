@@ -97,6 +97,7 @@ path = "tools/modnet.rs"
 [[bin]]
 name = "yolo_v8"
 path = "tools/yolo_v8.rs"
+required-features = ["yolo_v8"]
 
 
 [[bench]]
@@ -106,3 +107,4 @@ harness = false
 [[bench]]
 name = "yolo_v8"
 harness = false
+required-features = ["yolo_v8"]
