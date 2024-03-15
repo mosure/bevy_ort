@@ -1,9 +1,0 @@
-MIT or GPL-3.0 License
-
-This software is dual-licensed under the MIT License and the GNU General Public License version 3 (GPL-3.0).
-
-You may choose to use this software under the terms of the MIT License OR the GNU General Public License version 3 (GPL-3.0), except as stipulated below:
-
-The use of the `yolo_v8` feature within this software is specifically governed by the GNU General Public License version 3 (GPL-3.0). By using the `yolo_v8` feature, you agree to comply with the terms and conditions of the GPL-3.0.
-
-For more details on the licenses, please refer to the LICENSE.MIT and LICENSE.GPL-3.0 files included with this software.
