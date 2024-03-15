@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use image::GenericImageView;
 use ndarray::{Array, ArrayD, Axis};
+use serde::{Deserialize, Serialize};
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BoundingBox {
     pub x1: f32,
     pub y1: f32,
