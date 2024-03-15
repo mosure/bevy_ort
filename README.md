@@ -1,6 +1,6 @@
 # bevy_ort 🪨
 [![test](https://github.com/mosure/bevy_ort/workflows/test/badge.svg)](https://github.com/Mosure/bevy_ort/actions?query=workflow%3Atest)
-[![GitHub License](https://img.shields.io/github/license/mosure/bevy_ort)](https://raw.githubusercontent.com/mosure/bevy_ort/main/LICENSE)
+[![GitHub License](https://img.shields.io/badge/license-MIT%2FGPL%E2%80%933.0-blue.svg)](https://github.com/mosure/bevy_ort#license)
 [![crates.io](https://img.shields.io/crates/v/bevy_ort.svg)](https://crates.io/crates/bevy_ort)
 
 a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
@@ -173,5 +173,3 @@ You may choose to use this software under the terms of the MIT License OR the GN
 The use of the `yolo_v8` feature within this software is specifically governed by the GNU General Public License version 3 (GPL-3.0). By using the `yolo_v8` feature, you agree to comply with the terms and conditions of the GPL-3.0.
 
 For more details on the licenses, please refer to the LICENSE.MIT and LICENSE.GPL-3.0 files included with this software.
-
-
