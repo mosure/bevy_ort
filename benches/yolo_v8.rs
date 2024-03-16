@@ -21,6 +21,7 @@ use bevy_ort::{
     models::yolo_v8::{
         prepare_input,
         process_output,
+        yolo_inference,
     },
     Session,
 };
@@ -132,18 +133,11 @@ fn inference_benchmark(c: &mut Criterion) {
             RenderAssetUsages::all(),
         );
 
-        let input = prepare_input(&image, MODEL_WIDTH, MODEL_HEIGHT);
-
         group.throughput(Throughput::Elements(1));
         group.bench_with_input(BenchmarkId::from_parameter(format!("{}x{}", width, height)), &(width, height), |b, _| {
             b.iter(|| {
-                let input_values = inputs!["images" => &input.as_standard_layout()].map_err(|e| e.to_string()).unwrap();
-                let outputs = session.run(input_values).map_err(|e| e.to_string());
-                let binding = outputs.ok().unwrap();
-                let output_value: &ort::Value = binding.get("output0").unwrap();
-                process_output(output_value, *width, *height, MODEL_WIDTH, MODEL_HEIGHT);
+                yolo_inference(&session, &image, 0.5)
             });
         });
     });
 }
-

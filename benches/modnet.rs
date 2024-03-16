@@ -19,6 +19,7 @@ use bevy::{
 use bevy_ort::{
     inputs,
     models::modnet::{
+        modnet_inference,
         modnet_output_to_luma_images,
         images_to_modnet_input,
     },
@@ -138,16 +139,10 @@ fn modnet_inference_benchmark(c: &mut Criterion) {
             RenderAssetUsages::all(),
         );
 
-        let input = images_to_modnet_input(&[&image], Some((*width, *height)));
-
         group.throughput(Throughput::Elements(1));
         group.bench_with_input(BenchmarkId::from_parameter(format!("{}x{}", width, height)), &(width, height), |b, _| {
             b.iter(|| {
-                let input_values = inputs!["input" => input.view()].map_err(|e| e.to_string()).unwrap();
-                let outputs = session.run(input_values).map_err(|e| e.to_string());
-                let binding = outputs.ok().unwrap();
-                let output_value: &ort::Value = binding.get("output").unwrap();
-                modnet_output_to_luma_images(output_value);
+                modnet_inference(&session, &[&image], Some((*width, *height)))
             });
         });
     });

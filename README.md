@@ -83,20 +83,13 @@ fn inference(
     }
 
     let image = images.get(&modnet.input).expect("failed to get image asset");
-    let input = images_to_modnet_input(vec![&image], None);
 
     let mask_image: Result<Image, String> = (|| {
         let onnx = onnx_assets.get(&modnet.onnx).ok_or("failed to get ONNX asset")?;
         let session_lock = onnx.session.lock().map_err(|e| e.to_string())?;
         let session = session_lock.as_ref().ok_or("failed to get session from ONNX asset")?;
 
-        let input_values = inputs!["input" => input.view()].map_err(|e| e.to_string())?;
-        let outputs = session.run(input_values).map_err(|e| e.to_string());
-
-        let binding = outputs.ok().unwrap();
-        let output_value: &ort::Value = binding.get("output").unwrap();
-
-        Ok(modnet_output_to_luma_images(output_value).pop().unwrap())
+        Ok(modnet_inference(session, &[image], None).pop().unwrap())
     })();
 
     match mask_image {

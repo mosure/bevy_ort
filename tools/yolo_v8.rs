@@ -5,11 +5,11 @@ use bevy::{
 
 use bevy_ort::{
     BevyOrtPlugin,
-    inputs,
     models::yolo_v8::{
+        yolo_inference,
         BoundingBox,
-        prepare_input,
-        process_output,
+        Yolo,
+        YoloPlugin,
     },
     Onnx,
 };
@@ -20,36 +20,38 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             BevyOrtPlugin,
+            YoloPlugin,
         ))
-        .init_resource::<YoloV8>()
-        .add_systems(Startup, load_yolo_v8)
+        .init_resource::<YoloInput>()
+        .add_systems(Startup, load_yolo)
         .add_systems(Update, inference)
         .run();
 }
 
 
 #[derive(Resource, Default)]
-pub struct YoloV8 {
-    pub onnx: Handle<Onnx>,
-    pub input: Handle<Image>,
+pub struct YoloInput {
+    pub image: Handle<Image>,
 }
 
 
-fn load_yolo_v8(
+fn load_yolo(
     asset_server: Res<AssetServer>,
-    mut yolo_v8: ResMut<YoloV8>,
+    mut yolo: ResMut<Yolo>,
+    mut input: ResMut<YoloInput>,
 ) {
     let yolo_v8_handle: Handle<Onnx> = asset_server.load("yolov8n.onnx");
-    yolo_v8.onnx = yolo_v8_handle;
+    yolo.onnx = yolo_v8_handle;
 
     let input_handle: Handle<Image> = asset_server.load("person.png");
-    yolo_v8.input = input_handle;
+    input.image = input_handle;
 }
 
 
 fn inference(
     mut commands: Commands,
-    yolo_v8: Res<YoloV8>,
+    yolo: Res<Yolo>,
+    input: Res<YoloInput>,
     onnx_assets: Res<Assets<Onnx>>,
     images: Res<Assets<Image>>,
     primary_window: Query<&Window, With<PrimaryWindow>>,
@@ -61,30 +63,17 @@ fn inference(
 
     let window = primary_window.single();
 
-    let image = images.get(&yolo_v8.input).expect("failed to get image asset");
+    let image = images.get(&input.image).expect("failed to get image asset");
 
     let bounding_boxes: Result<Vec<BoundingBox>, String> = (|| {
-        let onnx = onnx_assets.get(&yolo_v8.onnx).ok_or("failed to get ONNX asset")?;
+        let onnx = onnx_assets.get(&yolo.onnx).ok_or("failed to get ONNX asset")?;
         let session_lock = onnx.session.lock().map_err(|e| e.to_string())?;
         let session = session_lock.as_ref().ok_or("failed to get session from ONNX asset")?;
 
-        let model_width = session.inputs[0].input_type.tensor_dimensions().unwrap()[2] as u32;
-        let model_height = session.inputs[0].input_type.tensor_dimensions().unwrap()[3] as u32;
-
-        let input = prepare_input(image, model_width, model_height);
-
-        let input_values = inputs!["images" => &input.as_standard_layout()].map_err(|e| e.to_string())?;
-        let outputs = session.run(input_values).map_err(|e| e.to_string());
-
-        let binding = outputs.ok().unwrap();
-        let output_value: &ort::Value = binding.get("output0").unwrap();
-
-        Ok(process_output(
-            output_value,
-            image.width(),
-            image.height(),
-            model_width,
-            model_height,
+        Ok(yolo_inference(
+            session,
+            image,
+            0.5,
         ))
     })();
 
@@ -108,7 +97,7 @@ fn inference(
                     style: Style {
                         ..default()
                     },
-                    image: UiImage::new(yolo_v8.input.clone()),
+                    image: UiImage::new(input.image.clone()),
                     ..default()
                 });
 

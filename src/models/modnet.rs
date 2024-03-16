@@ -13,6 +13,41 @@ use image::{DynamicImage, GenericImageView, imageops::FilterType, ImageBuffer, L
 use ndarray::{Array, Array4, ArrayView4};
 use rayon::prelude::*;
 
+use crate::{
+    inputs,
+    Onnx,
+};
+
+
+
+pub struct ModnetPlugin;
+impl Plugin for ModnetPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<Modnet>();
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct Modnet {
+    pub onnx: Handle<Onnx>,
+}
+
+
+pub fn modnet_inference(
+    session: &ort::Session,
+    images: &[&Image],
+    max_size: Option<(u32, u32)>,
+) -> Vec<Image> {
+    let input = images_to_modnet_input(images, max_size);
+
+    let input_values = inputs!["input" => input.view()].map_err(|e| e.to_string()).unwrap();
+    let outputs = session.run(input_values).map_err(|e| e.to_string());
+    let binding = outputs.ok().unwrap();
+    let output_value: &ort::Value = binding.get("output").unwrap();
+
+    modnet_output_to_luma_images(output_value)
+}
+
 
 pub fn modnet_output_to_luma_images(
     output_value: &ort::Value,
