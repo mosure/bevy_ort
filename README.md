@@ -6,8 +6,8 @@
 a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 
 
-![person](assets/person.png)
-![mask](assets/mask.png)
+![person](assets/images/person.png)
+![mask](assets/images/mask.png)
 
 *> modnet inference example*
 
@@ -21,6 +21,7 @@ a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 - [X] compute task pool inference scheduling
 
 ### models
+- [X] lightglue (feature matching)
 - [X] modnet (photographic portrait matting)
 - [X] yolo_v8 (object detection)
 
@@ -66,7 +67,7 @@ fn load_modnet(
     let modnet_handle: Handle<Onnx> = asset_server.load("modnet_photographic_portrait_matting.onnx");
     modnet.onnx = modnet_handle;
 
-    let input_handle: Handle<Image> = asset_server.load("person.png");
+    let input_handle: Handle<Image> = asset_server.load("images/person.png");
     modnet.input = input_handle;
 }
 

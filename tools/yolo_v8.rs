@@ -40,10 +40,10 @@ fn load_yolo(
     mut yolo: ResMut<Yolo>,
     mut input: ResMut<YoloInput>,
 ) {
-    let yolo_v8_handle: Handle<Onnx> = asset_server.load("yolov8n.onnx");
+    let yolo_v8_handle: Handle<Onnx> = asset_server.load("models/yolov8n.onnx");
     yolo.onnx = yolo_v8_handle;
 
-    let input_handle: Handle<Image> = asset_server.load("person.png");
+    let input_handle: Handle<Image> = asset_server.load("images/person.png");
     input.image = input_handle;
 }
 

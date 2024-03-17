@@ -1,3 +1,6 @@
+#[cfg(feature = "lightglue")]
+pub mod lightglue;
+
 #[cfg(feature = "modnet")]
 pub mod modnet;
 

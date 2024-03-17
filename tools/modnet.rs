@@ -36,10 +36,10 @@ fn load_modnet(
     mut modnet: ResMut<Modnet>,
     mut input: ResMut<ModnetInput>,
 ) {
-    let modnet_handle: Handle<Onnx> = asset_server.load("modnet_photographic_portrait_matting.onnx");
+    let modnet_handle: Handle<Onnx> = asset_server.load("models/modnet_photographic_portrait_matting.onnx");
     modnet.onnx = modnet_handle;
 
-    let input_handle: Handle<Image> = asset_server.load("person.png");
+    let input_handle: Handle<Image> = asset_server.load("images/person.png");
     input.image = input_handle;
 }
 

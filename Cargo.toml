@@ -1,7 +1,7 @@
 [package]
 name = "bevy_ort"
 description = "bevy ort (onnxruntime) plugin"
-version = "0.8.1"
+version = "0.9.0"
 edition = "2021"
 authors = ["mosure <mitchell@mosure.me>"]
 license = "MIT"
@@ -29,10 +29,12 @@ default-run = "modnet"
 
 [features]
 default = [
+  "lightglue",
   "modnet",
   "yolo_v8",
 ]
 
+lightglue = []
 modnet = ["rayon"]
 yolo_v8 = []
 
@@ -92,8 +94,14 @@ path = "src/lib.rs"
 
 
 [[bin]]
+name = "lightglue"
+path = "tools/lightglue.rs"
+required-features = ["lightglue"]
+
+[[bin]]
 name = "modnet"
 path = "tools/modnet.rs"
+required-features = ["modnet"]
 
 [[bin]]
 name = "yolo_v8"
@@ -102,10 +110,19 @@ required-features = ["yolo_v8"]
 
 
 [[bench]]
-name = "modnet"
+name = "lightglue"
+path = "benches/lightglue.rs"
 harness = false
+required-features = ["lightglue"]
+
+[[bench]]
+name = "modnet"
+path = "benches/modnet.rs"
+harness = false
+required-features = ["modnet"]
 
 [[bench]]
 name = "yolo_v8"
+path = "benches/yolo_v8.rs"
 harness = false
 required-features = ["yolo_v8"]
