@@ -64,11 +64,10 @@ fn inference(
 
     let window = primary_window.single();
 
-    let images = vec![
+    let images = [
         images.get(&input.a).expect("failed to get image asset"),
         images.get(&input.b).expect("failed to get image asset"),
     ];
-    let images = images.iter().map(|image| *image).collect::<Vec<_>>();
 
     let glued_pairs: Result<Vec<(usize, usize, Vec<GluedPair>)>, String> = (|| {
         let onnx = onnx_assets.get(&lightglue.onnx).ok_or("failed to get ONNX asset")?;
@@ -77,7 +76,7 @@ fn inference(
 
         Ok(lightglue_inference(
             session,
-            images.as_slice(),
+            &images,
         ))
     })();
 
@@ -109,8 +108,8 @@ fn inference(
                     let image_width = images[0].width() as f32;
                     let image_height = images[0].height() as f32;
 
-                    let display_width = window.width() as f32 / 2.0;
-                    let display_height = window.height() as f32 / 2.0;
+                    let display_width = window.width() / 2.0;
+                    let display_height = window.height() / 2.0;
 
                     let scale_x = display_width / image_width;
                     let scale_y = display_height / image_height;
@@ -145,8 +144,8 @@ fn inference(
                     let image_width = images[1].width() as f32;
                     let image_height = images[1].height() as f32;
 
-                    let display_width = window.width() as f32 / 2.0;
-                    let display_height = window.height() as f32 / 2.0;
+                    let display_width = window.width() / 2.0;
+                    let display_height = window.height() / 2.0;
 
                     let scale_x = display_width / image_width;
                     let scale_y = display_height / image_height;
