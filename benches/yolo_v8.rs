@@ -68,7 +68,7 @@ fn prepare_input_benchmark(c: &mut Criterion) {
             );
 
             group.throughput(Throughput::Elements(1));
-            group.bench_with_input(BenchmarkId::from_parameter(format!("{}x{}", width, height)), &image, |b, images| {
+            group.bench_with_input(BenchmarkId::from_parameter(format!("{}x{}", width, height)), &image, |b, image| {
                 b.iter(|| prepare_input(&image, MODEL_WIDTH, MODEL_HEIGHT));
             });
         });
