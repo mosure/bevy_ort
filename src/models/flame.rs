@@ -1,4 +1,17 @@
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    render::{
+        mesh::{
+            Indices,
+            Mesh,
+            Meshable,
+            PrimitiveTopology,
+        },
+        render_asset::RenderAssetUsages,
+    },
+};
+use bytemuck::cast_slice;
+use include_bytes_aligned::include_bytes_aligned;
 use ndarray::Array2;
 use serde::{Deserialize, Serialize};
 
@@ -7,6 +20,8 @@ use crate::{
     Onnx,
 };
 
+
+pub static INDEX_BUFFER: &[u8] = include_bytes_aligned!(4, "flame_index_buffer.bin");
 
 
 pub struct FlamePlugin;
@@ -82,13 +97,9 @@ pub struct FlameInput {
 
 impl Default for FlameInput {
     fn default() -> Self {
-        let radian = std::f32::consts::PI / 180.0;
-
         Self {
             shape: [[0.0; 100]; FLAME_BATCH_SIZE],
-            pose: [
-                [0.0, 30.0 * radian, 0.0, 0.0, 0.0, 0.0],
-            ],
+            pose: [[0.0; 6]; FLAME_BATCH_SIZE],
             expression: [[0.0; 50]; FLAME_BATCH_SIZE],
             neck: [[0.0; 3]; FLAME_BATCH_SIZE],
             eye: [[0.0; 6]; FLAME_BATCH_SIZE],
@@ -109,6 +120,21 @@ impl Default for FlameInput {
 pub struct FlameOutput {
     pub vertices: Vec<[f32; 3]>,  // TODO: use Vec3 for binding
     pub landmarks: Vec<[f32; 3]>,
+}
+
+impl Meshable for FlameOutput {
+    type Output = Mesh;
+
+    fn mesh(&self) -> Self::Output {
+        let indices = Indices::U32(cast_slice(INDEX_BUFFER).to_vec());
+
+        Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::default(),
+        )
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, self.vertices.clone())
+        .with_inserted_indices(indices)
+    }
 }
 
 
