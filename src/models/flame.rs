@@ -71,8 +71,8 @@ fn flame_inference_system(
                 commands.entity(entity)
                     .insert(flame_output);
             }
-            Err(e) => {
-                warn!("{}", e);
+            Err(_e) => {
+                return;
             }
         }
     }
