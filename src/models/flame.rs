@@ -13,6 +13,11 @@ pub struct FlamePlugin;
 impl Plugin for FlamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Flame>();
+
+        app.register_type::<FlameInput>();
+        app.register_type::<FlameOutput>();
+
+        app.add_systems(PreUpdate, flame_inference_system);
     }
 }
 
@@ -22,9 +27,48 @@ pub struct Flame {
 }
 
 
+fn flame_inference_system(
+    mut commands: Commands,
+    flame: Res<Flame>,
+    onnx_assets: Res<Assets<Onnx>>,
+    flame_inputs: Query<
+        (
+            Entity,
+            &FlameInput,
+        ),
+        Without<FlameOutput>,
+    >,
+) {
+    for (entity, flame_input) in flame_inputs.iter() {
+        let flame_output: Result<FlameOutput, String> = (|| {
+            let onnx = onnx_assets.get(&flame.onnx).ok_or("failed to get flame ONNX asset")?;
+            let session_lock = onnx.session.lock().map_err(|e| e.to_string())?;
+            let session = session_lock.as_ref().ok_or("failed to get flame session from flame ONNX asset")?;
+
+            Ok(flame_inference(
+                session,
+                flame_input,
+            ))
+        })();
+
+        match flame_output {
+            Ok(flame_output) => {
+                commands.entity(entity)
+                    .insert(flame_output);
+            }
+            Err(e) => {
+                warn!("{}", e);
+            }
+        }
+    }
+}
+
+
 #[derive(
     Debug,
     Clone,
+    Component,
+    Reflect,
 )]
 pub struct FlameInput {
     pub shape: [[f32; 100]; 8],
@@ -62,8 +106,10 @@ impl Default for FlameInput {
     Debug,
     Default,
     Clone,
+    Component,
     Deserialize,
     Serialize,
+    Reflect,
 )]
 pub struct FlameOutput {
     pub vertices: Vec<[f32; 3]>,  // TODO: use Vec3 for binding

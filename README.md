@@ -34,12 +34,12 @@ use bevy::prelude::*;
 
 use bevy_ort::{
     BevyOrtPlugin,
-    inputs,
-    models::modnet::{
-        images_to_modnet_input,
-        modnet_output_to_luma_images,
+    models::flame::{
+        FlameInput,
+        FlameOutput,
+        Flame,
+        FlamePlugin,
     },
-    Onnx,
 };
 
 
@@ -48,88 +48,51 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             BevyOrtPlugin,
+            FlamePlugin,
         ))
-        .init_resource::<Modnet>()
-        .add_systems(Startup, load_modnet)
-        .add_systems(Update, inference)
+        .add_systems(Startup, load_flame)
+        .add_systems(Startup, setup)
+        .add_systems(Update, on_flame_output)
         .run();
 }
 
-#[derive(Resource, Default)]
-pub struct Modnet {
-    pub onnx: Handle<Onnx>,
-    pub input: Handle<Image>,
-}
 
-fn load_modnet(
+fn load_flame(
     asset_server: Res<AssetServer>,
-    mut modnet: ResMut<Modnet>,
+    mut flame: ResMut<Flame>,
 ) {
-    let modnet_handle: Handle<Onnx> = asset_server.load("modnet_photographic_portrait_matting.onnx");
-    modnet.onnx = modnet_handle;
-
-    let input_handle: Handle<Image> = asset_server.load("images/person.png");
-    modnet.input = input_handle;
+    flame.onnx = asset_server.load("models/flame.onnx");
 }
 
 
-fn inference(
+fn setup(
     mut commands: Commands,
-    modnet: Res<Modnet>,
-    onnx_assets: Res<Assets<Onnx>>,
-    mut images: ResMut<Assets<Image>>,
-    mut complete: Local<bool>,
 ) {
-    if *complete {
-        return;
-    }
-
-    let image = images.get(&modnet.input).expect("failed to get image asset");
-
-    let mask_image: Result<Image, String> = (|| {
-        let onnx = onnx_assets.get(&modnet.onnx).ok_or("failed to get ONNX asset")?;
-        let session_lock = onnx.session.lock().map_err(|e| e.to_string())?;
-        let session = session_lock.as_ref().ok_or("failed to get session from ONNX asset")?;
-
-        Ok(modnet_inference(session, &[image], None).pop().unwrap())
-    })();
-
-    match mask_image {
-        Ok(mask_image) => {
-            let mask_image = images.add(mask_image);
-
-            commands.spawn(NodeBundle {
-                style: Style {
-                    display: Display::Grid,
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    grid_template_columns: RepeatedGridTrack::flex(1, 1.0),
-                    grid_template_rows: RepeatedGridTrack::flex(1, 1.0),
-                    ..default()
-                },
-                background_color: BackgroundColor(Color::DARK_GRAY),
-                ..default()
-            })
-            .with_children(|builder| {
-                builder.spawn(ImageBundle {
-                    style: Style {
-                        ..default()
-                    },
-                    image: UiImage::new(mask_image.clone()),
-                    ..default()
-                });
-            });
-
-            commands.spawn(Camera2dBundle::default());
-
-            *complete = true;
-        }
-        Err(e) => {
-            println!("inference failed: {}", e);
-        }
-    }
+    commands.spawn(FlameInput::default());
+    commands.spawn(Camera3dBundle::default());
 }
 
+
+#[derive(Debug, Component, Reflect)]
+struct HandledFlameOutput;
+
+fn on_flame_output(
+    mut commands: Commands,
+    flame_outputs: Query<
+        (
+            Entity,
+            &FlameOutput,
+        ),
+        Without<HandledFlameOutput>,
+    >,
+) {
+    for (entity, flame_output) in flame_outputs.iter() {
+        commands.entity(entity)
+            .insert(HandledFlameOutput);
+
+        println!("{:?}", flame_output);
+    }
+}
 ```
 
 
