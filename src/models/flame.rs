@@ -134,10 +134,10 @@ pub fn post_process(
     vertices: &ort::Value,
     landmarks: &ort::Value,
 ) -> FlameOutput {
-    let vertices_tensor = vertices.extract_tensor::<f32>().unwrap();
+    let vertices_tensor = vertices.try_extract_tensor::<f32>().unwrap();
     let vertices_view = vertices_tensor.view();  // [8, 5023, 3]
 
-    let landmarks_tensor = landmarks.extract_tensor::<f32>().unwrap();
+    let landmarks_tensor = landmarks.try_extract_tensor::<f32>().unwrap();
     let landmarks_view = landmarks_tensor.view();  // [8, 68, 3]
 
     let vertices = vertices_view.outer_iter()

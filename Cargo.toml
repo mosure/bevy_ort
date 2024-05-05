@@ -62,11 +62,12 @@ features = [
   "bevy_winit",
   "multi-threaded",
   "png",
+  "tonemapping_luts",
 ]
 
 
 [dependencies.ort]
-version = "2.0.0-rc.0"
+version = "2.0.0-rc.2"
 default-features = false
 features = [
   "cuda",

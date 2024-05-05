@@ -90,7 +90,7 @@ pub fn process_output(
 ) -> Vec<BoundingBox> {
     let mut boxes = Vec::new();
 
-    let tensor = output.extract_tensor::<f32>().unwrap();
+    let tensor = output.try_extract_tensor::<f32>().unwrap();
     let data = tensor.view().t().into_owned();
 
     for detection  in data.axis_iter(Axis(0)) {
