@@ -5,11 +5,9 @@ use bevy_ort::{
     models::flame::{
         FlameInput,
         FlameOutput,
-        flame_inference,
         Flame,
         FlamePlugin,
     },
-    Onnx,
 };
 
 
@@ -21,7 +19,8 @@ fn main() {
             FlamePlugin,
         ))
         .add_systems(Startup, load_flame)
-        .add_systems(Update, inference)
+        .add_systems(Startup, setup)
+        .add_systems(Update, on_flame_output)
         .run();
 }
 
@@ -30,41 +29,35 @@ fn load_flame(
     asset_server: Res<AssetServer>,
     mut flame: ResMut<Flame>,
 ) {
-    let flame_handle: Handle<Onnx> = asset_server.load("models/flame.onnx");
-    flame.onnx = flame_handle;
+    flame.onnx = asset_server.load("models/flame.onnx");
 }
 
 
-fn inference(
+fn setup(
     mut commands: Commands,
-    flame: Res<Flame>,
-    onnx_assets: Res<Assets<Onnx>>,
-    mut complete: Local<bool>,
 ) {
-    if *complete {
-        return;
-    }
+    commands.spawn(FlameInput::default());
+    commands.spawn(Camera3dBundle::default());
+}
 
-    let flame_output: Result<FlameOutput, String> = (|| {
-        let onnx = onnx_assets.get(&flame.onnx).ok_or("failed to get ONNX asset")?;
-        let session_lock = onnx.session.lock().map_err(|e| e.to_string())?;
-        let session = session_lock.as_ref().ok_or("failed to get session from ONNX asset")?;
 
-        Ok(flame_inference(
-            session,
-            &FlameInput::default(),
-        ))
-    })();
+#[derive(Debug, Component, Reflect)]
+struct HandledFlameOutput;
 
-    match flame_output {
-        Ok(_flame_output) => {
-            // TODO: insert mesh
-            // TODO: insert pan orbit camera
-            commands.spawn(Camera3dBundle::default());
-            *complete = true;
-        }
-        Err(e) => {
-            eprintln!("inference failed: {}", e);
-        }
+fn on_flame_output(
+    mut commands: Commands,
+    flame_outputs: Query<
+        (
+            Entity,
+            &FlameOutput,
+        ),
+        Without<HandledFlameOutput>,
+    >,
+) {
+    for (entity, flame_output) in flame_outputs.iter() {
+        commands.entity(entity)
+            .insert(HandledFlameOutput);
+
+        println!("{:?}", flame_output);
     }
 }
