@@ -19,3 +19,5 @@ www/assets/
 
 mediamtx/
 onnxruntime/
+
+*.onnx

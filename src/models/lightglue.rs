@@ -100,13 +100,13 @@ pub fn post_process(
     kpts1: &ort::Value,
     matches: &ort::Value,
 ) -> Result<Vec<GluedPair>, &'static str> {
-    let kpts0_tensor = kpts0.extract_tensor::<i64>().unwrap();
+    let kpts0_tensor = kpts0.try_extract_tensor::<i64>().unwrap();
     let kpts0_view = kpts0_tensor.view();
 
-    let kpts1_tensor = kpts1.extract_tensor::<i64>().unwrap();
+    let kpts1_tensor = kpts1.try_extract_tensor::<i64>().unwrap();
     let kpts1_view = kpts1_tensor.view();
 
-    let matches = matches.extract_tensor::<i64>().unwrap();
+    let matches = matches.try_extract_tensor::<i64>().unwrap();
     let matches_view = matches.view();
 
     Ok(

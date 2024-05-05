@@ -52,7 +52,7 @@ pub fn modnet_inference(
 pub fn modnet_output_to_luma_images(
     output_value: &ort::Value,
 ) -> Vec<Image> {
-    let tensor = output_value.extract_tensor::<f32>().unwrap();
+    let tensor = output_value.try_extract_tensor::<f32>().unwrap();
     let data = tensor.view();
 
     let shape = data.shape();

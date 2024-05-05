@@ -80,7 +80,7 @@ fn process_output_benchmark(c: &mut Criterion) {
 
     let session = Session::builder().unwrap()
         .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
-        .with_model_from_file("assets/yolov8n.onnx").unwrap();
+        .commit_from_file("assets/yolov8n.onnx").unwrap();
 
     RESOLUTIONS.iter()
         .for_each(|(width, height)| {
@@ -117,7 +117,7 @@ fn inference_benchmark(c: &mut Criterion) {
 
     let session = Session::builder().unwrap()
         .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
-        .with_model_from_file("assets/yolov8n.onnx").unwrap();
+        .commit_from_file("assets/yolov8n.onnx").unwrap();
 
     RESOLUTIONS.iter().for_each(|(width, height)| {
         let data = vec![0u8; *width as usize * *height as usize * 4];

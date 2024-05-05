@@ -1,7 +1,7 @@
 [package]
 name = "bevy_ort"
 description = "bevy ort (onnxruntime) plugin"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 authors = ["mosure <mitchell@mosure.me>"]
 license = "MIT"
@@ -29,11 +29,13 @@ default-run = "modnet"
 
 [features]
 default = [
+  "flame",
   "lightglue",
   "modnet",
   "yolo_v8",
 ]
 
+flame = []
 lightglue = []
 modnet = ["rayon"]
 yolo_v8 = []
@@ -60,11 +62,12 @@ features = [
   "bevy_winit",
   "multi-threaded",
   "png",
+  "tonemapping_luts",
 ]
 
 
 [dependencies.ort]
-version = "2.0.0-rc.0"
+version = "2.0.0-rc.2"
 default-features = false
 features = [
   "cuda",
@@ -92,6 +95,11 @@ opt-level = 3
 [lib]
 path = "src/lib.rs"
 
+
+[[bin]]
+name = "flame"
+path = "tools/flame.rs"
+required-features = ["flame"]
 
 [[bin]]
 name = "lightglue"
