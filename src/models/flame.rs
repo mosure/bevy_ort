@@ -110,7 +110,6 @@ impl Default for FlameInput {
 
 #[derive(
     Debug,
-    Default,
     Clone,
     Component,
     Deserialize,
@@ -120,6 +119,15 @@ impl Default for FlameInput {
 pub struct FlameOutput {
     pub vertices: Vec<[f32; 3]>,  // TODO: use Vec3 for binding
     pub landmarks: Vec<[f32; 3]>,
+}
+
+impl Default for FlameOutput {
+    fn default() -> Self {
+        Self {
+            vertices: vec![[0.0; 3]; 5023],
+            landmarks: vec![[0.0; 3]; 68],
+        }
+    }
 }
 
 impl Meshable for FlameOutput {
