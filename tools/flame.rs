@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use bevy_panorbit_camera::{
+    PanOrbitCamera,
+    PanOrbitCameraPlugin,
+};
 
 use bevy_ort::{
     BevyOrtPlugin,
@@ -17,6 +21,7 @@ fn main() {
             DefaultPlugins,
             BevyOrtPlugin,
             FlamePlugin,
+            PanOrbitCameraPlugin,
         ))
         .add_systems(Startup, load_flame)
         .add_systems(Startup, setup)
@@ -37,7 +42,13 @@ fn setup(
     mut commands: Commands,
 ) {
     commands.spawn(FlameInput::default());
-    commands.spawn(Camera3dBundle::default());
+    commands.spawn((
+        Camera3dBundle::default(),
+        PanOrbitCamera {
+            allow_upside_down: true,
+            ..default()
+        },
+    ));
 }
 
 
@@ -46,6 +57,7 @@ struct HandledFlameOutput;
 
 fn on_flame_output(
     mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
     flame_outputs: Query<
         (
             Entity,
@@ -58,6 +70,9 @@ fn on_flame_output(
         commands.entity(entity)
             .insert(HandledFlameOutput);
 
-        println!("{:?}", flame_output);
+            commands.spawn(PbrBundle {
+                mesh: meshes.add(flame_output.mesh()),
+                ..default()
+            });
     }
 }

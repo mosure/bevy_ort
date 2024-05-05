@@ -21,3 +21,4 @@ mediamtx/
 onnxruntime/
 
 *.onnx
+*.bin
