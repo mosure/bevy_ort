@@ -66,7 +66,7 @@ impl Default for FlameInput {
     Serialize,
 )]
 pub struct FlameOutput {
-    pub vertices: Vec<[f32; 3]>,
+    pub vertices: Vec<[f32; 3]>,  // TODO: use Vec3 for binding
     pub landmarks: Vec<[f32; 3]>,
 }
 
