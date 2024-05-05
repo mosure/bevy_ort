@@ -29,11 +29,13 @@ default-run = "modnet"
 
 [features]
 default = [
+  "flame",
   "lightglue",
   "modnet",
   "yolo_v8",
 ]
 
+flame = []
 lightglue = []
 modnet = ["rayon"]
 yolo_v8 = []
@@ -92,6 +94,11 @@ opt-level = 3
 [lib]
 path = "src/lib.rs"
 
+
+[[bin]]
+name = "flame"
+path = "tools/flame.rs"
+required-features = ["flame"]
 
 [[bin]]
 name = "lightglue"

@@ -1,3 +1,6 @@
+#[cfg(feature = "flame")]
+pub mod flame;
+
 #[cfg(feature = "lightglue")]
 pub mod lightglue;
 

@@ -24,6 +24,7 @@ a bevy plugin for the [ort](https://docs.rs/ort/latest/ort/) library
 - [X] lightglue (feature matching)
 - [X] modnet (photographic portrait matting)
 - [X] yolo_v8 (object detection)
+- [X] flame (parametric head model)
 
 
 ## library usage
