@@ -137,9 +137,6 @@ pub fn post_process(
     let landmarks_tensor = landmarks.extract_tensor::<f32>().unwrap();
     let landmarks_view = landmarks_tensor.view();  // [8, 68, 3]
 
-    println!("{:?}", vertices_view.shape());
-    println!("{:?}", landmarks_view.shape());
-
     let vertices = vertices_view.outer_iter()
         .flat_map(|subtensor| {
             subtensor.outer_iter().map(|row| {
