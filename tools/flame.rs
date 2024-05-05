@@ -57,7 +57,7 @@ fn inference(
     })();
 
     match flame_output {
-        Ok(flame_output) => {
+        Ok(_flame_output) => {
             // TODO: insert mesh
             // TODO: insert pan orbit camera
             commands.spawn(Camera3dBundle::default());

@@ -75,13 +75,13 @@ pub fn flame_inference(
     session: &ort::Session,
     input: &FlameInput,
 ) -> FlameOutput {
-    let (
+    let PreparedInput {
         shape,
         expression,
         pose,
         neck,
         eye,
-    ) = prepare_input(input);
+     } = prepare_input(input);
 
     let input_values = inputs![
         "shape" => shape.view(),
@@ -102,28 +102,31 @@ pub fn flame_inference(
     )
 }
 
+
+pub struct PreparedInput {
+    pub shape: Array2<f32>,
+    pub pose: Array2<f32>,
+    pub expression: Array2<f32>,
+    pub neck: Array2<f32>,
+    pub eye: Array2<f32>,
+}
+
 pub fn prepare_input(
     input: &FlameInput,
-) -> (
-    Array2<f32>,
-    Array2<f32>,
-    Array2<f32>,
-    Array2<f32>,
-    Array2<f32>,
-) {
+) -> PreparedInput {
     let shape = Array2::from_shape_vec((8, 100), input.shape.concat()).unwrap();
     let pose = Array2::from_shape_vec((8, 6), input.pose.concat()).unwrap();
     let expression = Array2::from_shape_vec((8, 50), input.expression.concat()).unwrap();
     let neck = Array2::from_shape_vec((8, 3), input.neck.concat()).unwrap();
     let eye = Array2::from_shape_vec((8, 6), input.eye.concat()).unwrap();
 
-    (
+    PreparedInput {
         shape,
         expression,
         pose,
         neck,
         eye,
-    )
+    }
 }
 
 
