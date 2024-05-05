@@ -28,10 +28,6 @@ pub struct FlamePlugin;
 impl Plugin for FlamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Flame>();
-
-        app.register_type::<FlameInput>();
-        app.register_type::<FlameOutput>();
-
         app.add_systems(PreUpdate, flame_inference_system);
     }
 }
