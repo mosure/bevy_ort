@@ -1,7 +1,7 @@
 [package]
 name = "bevy_ort"
 description = "bevy ort (onnxruntime) plugin"
-version = "0.12.7"
+version = "0.12.8"
 edition = "2021"
 authors = ["mosure <mitchell@mosure.me>"]
 license = "MIT"
@@ -22,7 +22,6 @@ exclude = [
   "build",
   "assets",
   "credits",
-  "*.ort",
 ]
 
 default-run = "modnet"
