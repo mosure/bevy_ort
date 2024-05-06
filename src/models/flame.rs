@@ -120,14 +120,14 @@ impl Default for FlameInput {
 )]
 pub struct FlameOutput {
     pub vertices: Vec<[f32; 3]>,  // TODO: use Vec3 for binding
-    pub landmarks: Vec<[f32; 3]>,
+    // pub landmarks: Vec<[f32; 3]>,
 }
 
 impl Default for FlameOutput {
     fn default() -> Self {
         Self {
             vertices: vec![[0.0; 3]; 5023],
-            landmarks: vec![[0.0; 3]; 68],
+            // landmarks: vec![[0.0; 3]; 68],
         }
     }
 }
@@ -171,11 +171,11 @@ pub fn flame_inference(
     let binding = outputs.ok().unwrap();
 
     let vertices: &ort::Value = binding.get("vertices").unwrap();
-    let landmarks: &ort::Value = binding.get("landmarks").unwrap();
+    // let landmarks: &ort::Value = binding.get("landmarks").unwrap();
 
     post_process(
         vertices,
-        landmarks,
+        // landmarks,
     )
 }
 
@@ -209,13 +209,13 @@ pub fn prepare_input(
 
 pub fn post_process(
     vertices: &ort::Value,
-    landmarks: &ort::Value,
+    // landmarks: &ort::Value,
 ) -> FlameOutput {
     let vertices_tensor = vertices.try_extract_tensor::<f32>().unwrap();
     let vertices_view = vertices_tensor.view();  // [FLAME_BATCH_SIZE, 5023, 3]
 
-    let landmarks_tensor = landmarks.try_extract_tensor::<f32>().unwrap();
-    let landmarks_view = landmarks_tensor.view();  // [FLAME_BATCH_SIZE, 68, 3]
+    // let landmarks_tensor = landmarks.try_extract_tensor::<f32>().unwrap();
+    // let landmarks_view = landmarks_tensor.view();  // [FLAME_BATCH_SIZE, 68, 3]
 
     let vertices = vertices_view.outer_iter()
         .flat_map(|subtensor| {
@@ -225,16 +225,16 @@ pub fn post_process(
         })
         .collect::<Vec::<_>>();
 
-    let landmarks = landmarks_view.outer_iter()
-        .flat_map(|subtensor| {
-            subtensor.outer_iter().map(|row| {
-                [row[0], row[1], row[2]]
-            }).collect::<Vec<[f32; 3]>>()
-        })
-        .collect::<Vec::<_>>();
+    // let landmarks = landmarks_view.outer_iter()
+    //     .flat_map(|subtensor| {
+    //         subtensor.outer_iter().map(|row| {
+    //             [row[0], row[1], row[2]]
+    //         }).collect::<Vec<[f32; 3]>>()
+    //     })
+    //     .collect::<Vec::<_>>();
 
     FlameOutput {
         vertices,
-        landmarks,
+        // landmarks,
     }
 }
