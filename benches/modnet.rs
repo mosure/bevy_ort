@@ -23,6 +23,7 @@ use bevy_ort::{
         modnet_output_to_luma_images,
         images_to_modnet_input,
     },
+    OrtSession,
     Session,
 };
 use ort::GraphOptimizationLevel;
@@ -124,6 +125,7 @@ fn modnet_inference_benchmark(c: &mut Criterion) {
     let session = Session::builder().unwrap()
         .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
         .commit_from_file("assets/modnet_photographic_portrait_matting.onnx").unwrap();
+    let session: bevy_ort::OrtSession = OrtSession::Session(session);
 
     MAX_RESOLUTIONS.iter().for_each(|(width, height)| {
         let data = vec![0u8; *width as usize * *height as usize * 4];

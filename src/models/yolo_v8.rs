@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     inputs,
     Onnx,
+    OrtSession,
 };
 
 
@@ -35,15 +36,15 @@ pub struct Yolo {
 
 // TODO: support yolo input batching
 pub fn yolo_inference(
-    session: &ort::Session,
+    session: &OrtSession,
     image: &Image,
     iou_threshold: f32,
 ) -> Vec<BoundingBox> {
     let width = image.width();
     let height = image.height();
 
-    let model_width = session.inputs[0].input_type.tensor_dimensions().unwrap()[2] as u32;
-    let model_height = session.inputs[0].input_type.tensor_dimensions().unwrap()[3] as u32;
+    let model_width = session.inputs()[0].input_type.tensor_dimensions().unwrap()[2] as u32;
+    let model_height = session.inputs()[0].input_type.tensor_dimensions().unwrap()[3] as u32;
 
     let input = prepare_input(image, model_width, model_height);
 

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     inputs,
     Onnx,
+    OrtSession,
 };
 
 
@@ -33,7 +34,7 @@ pub struct GluedPair {
 
 
 pub fn lightglue_inference(
-    session: &ort::Session,
+    session: &OrtSession,
     images: &[&Image],
 ) -> Vec<(usize, usize, Vec<GluedPair>)> {
     let unique_unordered_pairs = images.iter().enumerate()

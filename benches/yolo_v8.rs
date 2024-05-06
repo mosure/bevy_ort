@@ -23,6 +23,7 @@ use bevy_ort::{
         process_output,
         yolo_inference,
     },
+    OrtSession,
     Session,
 };
 use ort::GraphOptimizationLevel;
@@ -118,6 +119,7 @@ fn inference_benchmark(c: &mut Criterion) {
     let session = Session::builder().unwrap()
         .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
         .commit_from_file("assets/yolov8n.onnx").unwrap();
+    let session = OrtSession::Session(session);
 
     RESOLUTIONS.iter().for_each(|(width, height)| {
         let data = vec![0u8; *width as usize * *height as usize * 4];

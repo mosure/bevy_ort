@@ -51,9 +51,57 @@ impl Plugin for BevyOrtPlugin {
 }
 
 
-#[derive(Asset, Debug, Default, TypePath)]
+pub enum OrtSession {
+    Session(ort::Session),
+    InMemory(ort::InMemorySession<'static>),
+}
+
+impl OrtSession {
+    pub fn run<'s, 'i, 'v: 'i, const N: usize>(
+        &'s self,
+        input_values: impl Into<ort::SessionInputs<'i, 'v, N>>,
+    ) -> Result<ort::SessionOutputs, ort::Error> {
+        match self {
+            OrtSession::Session(session) => session.run(input_values),
+            OrtSession::InMemory(session) => session.run(input_values),
+        }
+    }
+
+    pub fn inputs(&self) -> &Vec<ort::Input> {
+        match self {
+            OrtSession::Session(session) => &session.inputs,
+            OrtSession::InMemory(session) => &session.inputs,
+        }
+    }
+
+    pub fn outputs(&self) -> &Vec<ort::Output> {
+        match self {
+            OrtSession::Session(session) => &session.outputs,
+            OrtSession::InMemory(session) => &session.outputs,
+        }
+    }
+}
+
+#[derive(Asset, Default, TypePath)]
 pub struct Onnx {
-    pub session: Arc<Mutex<Option<Session>>>,
+    pub session_data: Vec<u8>,
+    pub session: Arc<Mutex<Option<OrtSession>>>,
+}
+
+impl Onnx {
+    pub fn from_session(session: Session) -> Self {
+        Self {
+            session_data: Vec::new(),
+            session: Arc::new(Mutex::new(Some(OrtSession::Session(session)))),
+        }
+    }
+
+    pub fn from_in_memory(session: ort::InMemorySession<'static>) -> Self {
+        Self {
+            session_data: Vec::new(),
+            session: Arc::new(Mutex::new(Some(OrtSession::InMemory(session)))),
+        }
+    }
 }
 
 
@@ -90,9 +138,7 @@ impl AssetLoader for OnnxLoader {
                         .with_optimization_level(GraphOptimizationLevel::Level3)?
                         .commit_from_memory(&bytes)?;
 
-                    Ok(Onnx {
-                        session: Arc::new(Mutex::new(Some(session))),
-                    })
+                    Ok(Onnx::from_session(session))
                 },
                 _ => Err(BevyOrtError::Io(std::io::Error::new(ErrorKind::Other, "only .onnx supported"))),
             }

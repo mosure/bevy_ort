@@ -15,13 +15,20 @@ use include_bytes_aligned::include_bytes_aligned;
 use ndarray::Array2;
 use serde::{Deserialize, Serialize};
 
+#[cfg(target_arch = "wasm32")]
+use ort::Session;
+
 use crate::{
     inputs,
     Onnx,
+    OrtSession,
 };
 
 
 pub static INDEX_BUFFER: &[u8] = include_bytes_aligned!(4, "flame_index_buffer.bin");
+
+#[cfg(target_arch = "wasm32")]
+pub static ORT_DATA: &[u8] = include_bytes_aligned!(4, "flame.ort");
 
 
 pub struct FlamePlugin;
@@ -29,7 +36,25 @@ impl Plugin for FlamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Flame>();
         app.add_systems(PreUpdate, flame_inference_system);
+
+        #[cfg(target_arch = "wasm32")]
+        app.add_systems(Startup, load);
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn load(
+    mut flame: ResMut<Flame>,
+    mut onnx: ResMut<Assets<Onnx>>,
+) {
+    flame.onnx = onnx.add(
+        Onnx::from_in_memory(
+            Session::builder()
+                .unwrap()
+                .commit_from_memory_directly(ORT_DATA)
+                .unwrap()
+        )
+    );
 }
 
 #[derive(Resource, Default)]
@@ -143,7 +168,7 @@ impl Meshable for FlameOutput {
 
 
 pub fn flame_inference(
-    session: &ort::Session,
+    session: &OrtSession,
     input: &FlameInput,
 ) -> FlameOutput {
     let PreparedInput {

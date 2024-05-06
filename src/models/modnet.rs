@@ -16,6 +16,7 @@ use rayon::prelude::*;
 use crate::{
     inputs,
     Onnx,
+    OrtSession,
 };
 
 
@@ -34,7 +35,7 @@ pub struct Modnet {
 
 
 pub fn modnet_inference(
-    session: &ort::Session,
+    session: &OrtSession,
     images: &[&Image],
     max_size: Option<(u32, u32)>,
 ) -> Vec<Image> {
