@@ -15,9 +15,6 @@ use include_bytes_aligned::include_bytes_aligned;
 use ndarray::Array2;
 use serde::{Deserialize, Serialize};
 
-#[cfg(target_arch = "wasm32")]
-use ort::Session;
-
 use crate::{
     inputs,
     Onnx,
